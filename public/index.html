@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<!-- <script src="main_index-server.js"></script> -->
+<body>
+  <div class="container">
+    <h1>Dashboard</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" name="csv" />
+      <button type="submit">Upload</button>
+    </form>
+    <div id="dataTable"></div>
+  </div>
+  
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await response.text();
+      alert(result);
+      fetchData();
+    });
+
+    async function fetchData() {
+      const response = await fetch('./data');
+      const data = await response.json();
+      let tableHTML = '<table class="table"><thead><tr><th>Field1</th><th>Field2</th></tr></thead><tbody>';
+      data.forEach(row => {
+        tableHTML += `<tr><td>${row.field1}</td><td>${row.field2}</td></tr>`;
+      });
+      tableHTML += '</tbody></table>';
+      document.getElementById('dataTable').innerHTML = tableHTML;
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>

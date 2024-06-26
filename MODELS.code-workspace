@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "MODELS"
+		},
+		{
+			"path": "CONTROLLERS"
+		},
+		{
+			"path": "PUBLIC"
+		},
+		{
+			"path": "ROUTES"
+		},
+		{
+			"path": "UPLOADS"
+		}
+	]
+}
