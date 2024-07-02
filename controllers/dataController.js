@@ -1,62 +1,85 @@
-const csvParser = require('csv-parser');
-const fs = require('fs');
-const { Client } = require('pg');
-const path = require('path');
+const csvParser = require("csv-parser");
+const fs = require("fs");
+const { Client } = require("pg");
+const path = require("path");
 
 // Database connection configuration
 const client = new Client({
-  user: 'root',
-  host: 'localhost',
-  database: 'mydatabase',
-  password: 'root',
-  port: 5432, // Default PostgreSQL port
+  user: "myapp",
+  host: "localhost",
+  database: "mydatabase",
+  password: "123456",
+  port: 5432,
 });
 
-client.connect()
-  .then(() => console.log('Connected to PostgreSQL database'))
-  .catch(err => console.error('Connection error', err.stack));
-
+client
+  .connect()
+  .then(() => console.log("Connected to PostgreSQL database"))
+  .catch((err) => console.error("Connection error", err.stack));
 
 const uploadCSV = (req, res) => {
-  const results = [];
-  fs.createReadStream(req.file.path)
-    .pipe(csvParser())
-    .on('data', (data) => results.push(data))
-    .on('end', async () => {
-      try {
-        for (const row of results) {
-          const query = 'INSERT INTO your_table_name (field1, field2) VALUES ($1, $2)';
-          const values = [row.field1, row.field2]; // Adjust fields based on your CSV structure
-          await client.query(query, values);
+  if (!req.files || !req.files.file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  const uploadedFile = req.files.file;
+  const dataDir = path.join(__dirname, "data");
+
+  // Ensure the data directory exists
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+  }
+
+  const filePath = path.join(dataDir, uploadedFile.name);
+
+  // Write the file to the data directory
+  fs.writeFile(filePath, uploadedFile.data, (err) => {
+    if (err) {
+      console.error("File upload failed:", err);
+      return res.status(500).send("Error uploading file");
+    }
+
+    // Process the CSV file
+    const results = [];
+    fs.createReadStream(filePath)
+      .pipe(csvParser())
+      .on("data", (data) => results.push(data))
+      .on("end", async () => {
+        try {
+          for (const row of results) {
+            const query = "INSERT INTO mock_data (first_name) VALUES ($1)";
+            const values = [row.first_name];
+            await client.query(query, values);
+          }
+          res.send("CSV file processed and data saved to database");
+        } catch (err) {
+          console.error(err);
+          res.status(500).send("Error saving data to database");
         }
-        res.send('CSV file processed and data saved to database');
-      } catch (err) {
-        console.error(err);
-        res.status(500).send('Error saving data to database');
-      }
-    });
+      });
+  });
 };
 
 const fetchData = async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM your_table_name');
+    const result = await client.query("SELECT * FROM mock_data");
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error fetching data from database');
+    res.status(500).send("Error fetching data from database");
   }
 };
 
 const updateData = async (req, res) => {
-  const { id, updateFields } = req.body;
+  const { id, first_name } = req.body;
   try {
-    const query = 'UPDATE your_table_name SET field1 = $1, field2 = $2 WHERE id = $3';
-    const values = [updateFields.field1, updateFields.field2, id];
+    const query = "UPDATE mock_data SET first_name = $1 WHERE id = $2";
+    const values = [first_name, id];
     await client.query(query, values);
-    res.send('Data updated');
+    res.send("Data updated");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error updating data');
+    res.status(500).send("Error updating data");
   }
 };
 

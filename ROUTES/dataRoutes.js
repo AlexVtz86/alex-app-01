@@ -1,12 +1,13 @@
-const express = require('express');
-const multer = require('multer');
-const { uploadCSV, fetchData, updateData } = require('../controllers/dataController');
-
+const express = require("express");
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
+const {
+  uploadCSV,
+  fetchData,
+  updateData,
+} = require("../controllers/dataController");
 
-router.post('/upload', upload.single('csv'), uploadCSV);
-router.get('/data', fetchData);
-router.post('/update', updateData);
+router.post("/upload", uploadCSV);
+router.get("/data", fetchData);
+router.put("/data", updateData);
 
 module.exports = router;
