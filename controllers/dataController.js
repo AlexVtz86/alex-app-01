@@ -14,55 +14,76 @@ const client = new Client({
 
 client
   .connect()
-  .then(() => console.log("Connected to PostgreSQL database"))
+  .then(() =>
+    console.log(
+      `Connected to PostgreSQL database\n User: {client.user}\n Host: {client.host}\n Database: {client.database}\n Port: {client.port}`
+    )
+  )
   .catch((err) => console.error("Connection error", err.stack));
 
-const uploadCSV = (req, res) => {
+const uploadCSV = async (req, res) => {
   if (!req.files || !req.files.file) {
     return res.status(400).send("No file uploaded.");
   }
 
   const uploadedFile = req.files.file;
-  const dataDir = path.join(__dirname, "data");
+  const dataDir = path.join(__dirname, "..", "data");
 
   // Ensure the data directory exists
   if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir);
+    fs.mkdirSync(dataDir, { recursive: true });
   }
 
   const filePath = path.join(dataDir, uploadedFile.name);
 
-  // Write the file to the data directory
-  fs.writeFile(filePath, uploadedFile.data, (err) => {
-    if (err) {
-      console.error("File upload failed:", err);
-      return res.status(500).send("Error uploading file");
-    }
+  try {
+    // Write the file to the data directory
+    await fs.promises.writeFile(filePath, uploadedFile.data);
 
     // Process the CSV file
     const results = [];
-    fs.createReadStream(filePath)
-      .pipe(csvParser())
-      .on("data", (data) => results.push(data))
-      .on("end", async () => {
-        try {
-          for (const row of results) {
-            const query = "INSERT INTO mock_data (first_name) VALUES ($1)";
-            const values = [row.first_name];
-            await client.query(query, values);
-          }
-          res.send("CSV file processed and data saved to database");
-        } catch (err) {
-          console.error(err);
-          res.status(500).send("Error saving data to database");
-        }
-      });
-  });
+    await new Promise((resolve, reject) => {
+      fs.createReadStream(filePath)
+        .pipe(csvParser())
+        .on("data", (data) => results.push(data))
+        .on("end", resolve)
+        .on("error", reject);
+    });
+
+    // Insert data into database
+    for (const row of results) {
+      const query = `
+          INSERT INTO mock_data (
+            id, first_name, last_name, email, gender, ip_address
+          ) VALUES ($1, $2, $3, $4, $5, $6)
+          ON CONFLICT (id) DO UPDATE SET
+            first_name = EXCLUDED.first_name,
+            last_name = EXCLUDED.last_name,
+            email = EXCLUDED.email,
+            gender = EXCLUDED.gender,
+            ip_address = EXCLUDED.ip_address
+        `;
+      const values = [
+        row.id,
+        row.first_name,
+        row.last_name,
+        row.email,
+        row.gender,
+        row.ip_address,
+      ];
+      await client.query(query, values);
+    }
+
+    res.send("CSV file processed and data saved to database");
+  } catch (err) {
+    console.error("Error processing file:", err);
+    res.status(500).send("Error processing file: " + err.message);
+  }
 };
 
 const fetchData = async (req, res) => {
   try {
-    const result = await client.query("SELECT * FROM mock_data");
+    const result = await client.query("SELECT * FROM mock_data ORDER BY id");
     res.json(result.rows);
   } catch (err) {
     console.error(err);
