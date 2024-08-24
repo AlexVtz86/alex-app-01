@@ -1,0 +1,11 @@
+{
+  "tableName": "mock_data",
+  "columns": [
+    {"name": "id", "type": "INTEGER PRIMARY KEY"},
+    {"name": "first_name", "type": "VARCHAR(255)"},
+    {"name": "last_name", "type": "VARCHAR(255)"},
+    {"name": "email", "type": "VARCHAR(255)"},
+    {"name": "gender", "type": "VARCHAR(50)"},
+    {"name": "ip_address", "type": "VARCHAR(50)"}
+  ]
+}

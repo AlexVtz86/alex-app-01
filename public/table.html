@@ -28,31 +28,48 @@
     <h1>Mock Data Table</h1>
     <table id="dataTable">
         <thead>
-            <tr>
-                <th>ID</th>
-                <th>First Name</th>
-            </tr>
+            <tr id="tableHeader"></tr>
         </thead>
-        <tbody>
-            <!-- Data will be inserted here dynamically -->
-        </tbody>
+        <tbody></tbody>
     </table>
 
     <script>
-        fetch('/api/data')
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.querySelector('#dataTable tbody');
-                data.forEach(row => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${row.id}</td>
-                        <td>${row.first_name}</td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
-            })
-            .catch(error => console.error('Error:', error));
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                const thead = document.querySelector('#tableHeader');
+                const tbody = document.querySelector('#dataTable tbody');
+
+                thead.innerHTML = '';
+                tbody.innerHTML = '';
+
+                if (data.length > 0) {
+                    // Create table headers dynamically
+                    Object.keys(data[0]).forEach(key => {
+                        const th = document.createElement('th');
+                        th.textContent = key;
+                        thead.appendChild(th);
+                    });
+
+                    // Populate table rows
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        Object.values(row).forEach(value => {
+                            const td = document.createElement('td');
+                            td.textContent = value;
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('message').textContent = 'An error occurred while fetching data.';
+            }
+        }
+
+        fetchData();
     </script>
 </body>
 

@@ -14,12 +14,56 @@ const client = new Client({
 
 client
   .connect()
-  .then(() =>
+  .then(() => {
     console.log(
-      `Connected to PostgreSQL database\n User: {client.user}\n Host: {client.host}\n Database: {client.database}\n Port: {client.port}`
-    )
-  )
-  .catch((err) => console.error("Connection error", err.stack));
+      `Connected to PostgreSQL database:
+      User: ${client.user}
+      Host: ${client.host}
+      Database: ${client.database}
+      Port: ${client.port}`
+    );
+  })
+  .catch((err) => {
+    console.error("Connection error", err.stack);
+  });
+const createTableIfNotExists = async () => {
+  const columnsDefinition = dbConfig.columns
+    .map((column) => `${column.name} ${column.type}`)
+    .join(", ");
+
+  const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS ${dbConfig.tableName} (
+        ${columnsDefinition}
+      )
+    `;
+
+  try {
+    await client.query(createTableQuery);
+    console.log(`Table ${dbConfig.tableName} created or already exists`);
+  } catch (err) {
+    console.error("Error creating table:", err);
+    throw err;
+  }
+};
+
+client
+  .connect()
+  .then(() => {
+    console.log(
+      `Connected to PostgreSQL database:
+        User: ${client.user}
+        Host: ${client.host}
+        Database: ${client.database}
+        Port: ${client.port}`
+    );
+    return createTableIfNotExists();
+  })
+  .then(() => {
+    console.log("Database setup complete");
+  })
+  .catch((err) => {
+    console.error("Connection error", err.stack);
+  });
 
 const uploadCSV = async (req, res) => {
   if (!req.files || !req.files.file) {
@@ -29,7 +73,6 @@ const uploadCSV = async (req, res) => {
   const uploadedFile = req.files.file;
   const dataDir = path.join(__dirname, "..", "data");
 
-  // Ensure the data directory exists
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
@@ -37,10 +80,8 @@ const uploadCSV = async (req, res) => {
   const filePath = path.join(dataDir, uploadedFile.name);
 
   try {
-    // Write the file to the data directory
     await fs.promises.writeFile(filePath, uploadedFile.data);
 
-    // Process the CSV file
     const results = [];
     await new Promise((resolve, reject) => {
       fs.createReadStream(filePath)
@@ -50,27 +91,22 @@ const uploadCSV = async (req, res) => {
         .on("error", reject);
     });
 
-    // Insert data into database
+    const columnNames = dbConfig.columns.map((column) => column.name);
+    const placeholders = columnNames
+      .map((_, index) => `$${index + 1}`)
+      .join(", ");
+    const updateSet = columnNames
+      .map((col, index) => `${col} = $${index + 1}`)
+      .join(", ");
+
     for (const row of results) {
       const query = `
-          INSERT INTO mock_data (
-            id, first_name, last_name, email, gender, ip_address
-          ) VALUES ($1, $2, $3, $4, $5, $6)
+          INSERT INTO ${dbConfig.tableName} (${columnNames.join(", ")})
+          VALUES (${placeholders})
           ON CONFLICT (id) DO UPDATE SET
-            first_name = EXCLUDED.first_name,
-            last_name = EXCLUDED.last_name,
-            email = EXCLUDED.email,
-            gender = EXCLUDED.gender,
-            ip_address = EXCLUDED.ip_address
+            ${updateSet}
         `;
-      const values = [
-        row.id,
-        row.first_name,
-        row.last_name,
-        row.email,
-        row.gender,
-        row.ip_address,
-      ];
+      const values = columnNames.map((col) => row[col] || null);
       await client.query(query, values);
     }
 
@@ -83,7 +119,9 @@ const uploadCSV = async (req, res) => {
 
 const fetchData = async (req, res) => {
   try {
-    const result = await client.query("SELECT * FROM mock_data ORDER BY id");
+    const result = await client.query(
+      `SELECT * FROM ${dbConfig.tableName} ORDER BY id`
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);

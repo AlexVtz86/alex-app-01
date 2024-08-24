@@ -50,23 +50,6 @@
   </table>
 
   <script>
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      try {
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        });
-        const result = await response.text();
-        document.getElementById('message').textContent = result;
-        fetchData();
-      } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('message').textContent = 'An error occurred during upload.';
-      }
-    });
-
     async function fetchData() {
       try {
         const response = await fetch('/api/data');
@@ -76,13 +59,13 @@
         data.forEach(row => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-                        <td>${row.id}</td>
-                        <td>${row.first_name}</td>
-                        <td>${row.last_name}</td>
-                        <td>${row.email}</td>
-                        <td>${row.gender}</td>
-                        <td>${row.ip_address}</td>
-                    `;
+                    <td>${row.id}</td>
+                    <td>${row.first_name}</td>
+                    <td>${row.last_name}</td>
+                    <td>${row.email}</td>
+                    <td>${row.gender}</td>
+                    <td>${row.ip_address}</td>
+                `;
           tbody.appendChild(tr);
         });
       } catch (error) {
@@ -93,6 +76,7 @@
 
     fetchData();
   </script>
+
 </body>
 
 </html>
