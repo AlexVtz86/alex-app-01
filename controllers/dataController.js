@@ -2,19 +2,25 @@ const csvParser = require("csv-parser");
 const fs = require("fs");
 const { Client } = require("pg");
 const path = require("path");
+const dbConfig = require("../db_config.json");
 
-// Database connection configuration
-const client = new Client({
-  user: "myapp",
-  host: "localhost",
-  database: "mydatabase",
-  password: "123456",
-  port: 5432,
-});
+let client = null;
 
-client
-  .connect()
-  .then(() => {
+const initializeDatabase = async () => {
+  if (client) {
+    return client; // Return existing client if already initialized
+  }
+
+  client = new Client({
+    user: "myapp",
+    host: "localhost",
+    database: "mydatabase",
+    password: "123456",
+    port: 5432,
+  });
+
+  try {
+    await client.connect();
     console.log(
       `Connected to PostgreSQL database:
       User: ${client.user}
@@ -22,20 +28,26 @@ client
       Database: ${client.database}
       Port: ${client.port}`
     );
-  })
-  .catch((err) => {
+
+    await createTableIfNotExists();
+    console.log("Database setup complete");
+    return client;
+  } catch (err) {
     console.error("Connection error", err.stack);
-  });
+    throw err;
+  }
+};
+
 const createTableIfNotExists = async () => {
   const columnsDefinition = dbConfig.columns
     .map((column) => `${column.name} ${column.type}`)
     .join(", ");
 
   const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS ${dbConfig.tableName} (
-        ${columnsDefinition}
-      )
-    `;
+    CREATE TABLE IF NOT EXISTS ${dbConfig.tableName} (
+      ${columnsDefinition}
+    )
+  `;
 
   try {
     await client.query(createTableQuery);
@@ -45,25 +57,6 @@ const createTableIfNotExists = async () => {
     throw err;
   }
 };
-
-client
-  .connect()
-  .then(() => {
-    console.log(
-      `Connected to PostgreSQL database:
-        User: ${client.user}
-        Host: ${client.host}
-        Database: ${client.database}
-        Port: ${client.port}`
-    );
-    return createTableIfNotExists();
-  })
-  .then(() => {
-    console.log("Database setup complete");
-  })
-  .catch((err) => {
-    console.error("Connection error", err.stack);
-  });
 
 const uploadCSV = async (req, res) => {
   if (!req.files || !req.files.file) {
@@ -96,21 +89,45 @@ const uploadCSV = async (req, res) => {
       .map((_, index) => `$${index + 1}`)
       .join(", ");
     const updateSet = columnNames
-      .map((col, index) => `${col} = $${index + 1}`)
+      .map((col, index) => `${col} = EXCLUDED.${col}`)
       .join(", ");
+
+    let inserted = 0;
+    let updated = 0;
 
     for (const row of results) {
       const query = `
-          INSERT INTO ${dbConfig.tableName} (${columnNames.join(", ")})
-          VALUES (${placeholders})
-          ON CONFLICT (id) DO UPDATE SET
-            ${updateSet}
-        `;
-      const values = columnNames.map((col) => row[col] || null);
-      await client.query(query, values);
+        INSERT INTO ${dbConfig.tableName} (${columnNames.join(", ")})
+        VALUES (${placeholders})
+        ON CONFLICT (id) DO UPDATE SET
+          ${updateSet}
+      `;
+      const values = columnNames.map((col) => {
+        if (col === "id") {
+          const id = parseInt(row[col], 10);
+          return isNaN(id) ? null : id;
+        }
+        return row[col] || null;
+      });
+
+      if (values[0] === null) {
+        console.warn("Skipping row with invalid ID:", row);
+        continue;
+      }
+
+      const result = await client.query(query, values);
+      if (result.rowCount === 1) {
+        if (result.command === "INSERT") {
+          inserted++;
+        } else {
+          updated++;
+        }
+      }
     }
 
-    res.send("CSV file processed and data saved to database");
+    res.send(
+      `CSV file processed. Inserted: ${inserted}, Updated: ${updated} records.`
+    );
   } catch (err) {
     console.error("Error processing file:", err);
     res.status(500).send("Error processing file: " + err.message);
@@ -142,4 +159,4 @@ const updateData = async (req, res) => {
   }
 };
 
-module.exports = { uploadCSV, fetchData, updateData };
+module.exports = { initializeDatabase, uploadCSV, fetchData, updateData };
