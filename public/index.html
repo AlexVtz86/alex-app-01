@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSV Upload and Display</title>
+  <title>העלאת והצגת CSV</title>
   <style>
     table {
       border-collapse: collapse;
@@ -15,7 +15,7 @@
     td {
       border: 1px solid black;
       padding: 8px;
-      text-align: left;
+      text-align: right;
     }
 
     th {
@@ -25,25 +25,27 @@
 </head>
 
 <body>
-  <h1>CSV Upload and Display</h1>
+  <h1>העלאת והצגת CSV</h1>
 
   <form id="uploadForm" enctype="multipart/form-data">
     <input type="file" name="file" accept=".csv" required>
-    <button type="submit">Upload CSV</button>
+    <button type="submit">העלאת CSV</button>
   </form>
 
   <div id="message"></div>
 
-  <h2>Data Table</h2>
+  <h2>טבלת נתונים</h2>
   <table id="dataTable">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Email</th>
-        <th>Gender</th>
-        <th>IP Address</th>
+        <th>מזהה</th>
+        <th>תאריך</th>
+        <th>שם מלא</th>
+        <th>טלפון</th>
+        <th>אימייל</th>
+        <th>לוקח תרופות</th>
+        <th>סובל מכאבים</th>
+        <th>קופת חולים</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -63,7 +65,7 @@
         fetchData();
       } catch (error) {
         console.error('Error:', error);
-        document.getElementById('message').textContent = 'An error occurred during upload.';
+        document.getElementById('message').textContent = 'אירעה שגיאה במהלך ההעלאה.';
       }
     });
 
@@ -77,17 +79,19 @@
           const tr = document.createElement('tr');
           tr.innerHTML = `
                         <td>${row.id}</td>
-                        <td>${row.first_name}</td>
-                        <td>${row.last_name}</td>
-                        <td>${row.email}</td>
-                        <td>${row.gender}</td>
-                        <td>${row.ip_address}</td>
+                        <td>${new Date(row.תאריך).toLocaleDateString('he-IL')}</td>
+                        <td>${row['שם מלא']}</td>
+                        <td>${row.טלפון}</td>
+                        <td>${row.אימייל}</td>
+                        <td>${row['לוקח תרופות'] ? 'כן' : 'לא'}</td>
+                        <td>${row['סובל מכאבים'] ? 'כן' : 'לא'}</td>
+                        <td>${row['קופת חולים']}</td>
                     `;
           tbody.appendChild(tr);
         });
       } catch (error) {
         console.error('Error:', error);
-        document.getElementById('message').textContent = 'An error occurred while fetching data.';
+        document.getElementById('message').textContent = 'אירעה שגיאה בעת אחזור הנתונים.';
       }
     }
 

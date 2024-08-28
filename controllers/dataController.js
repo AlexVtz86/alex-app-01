@@ -8,7 +8,7 @@ let client = null;
 
 const initializeDatabase = async () => {
   if (client) {
-    return client; // Return existing client if already initialized
+    return client;
   }
 
   client = new Client({
@@ -21,13 +21,7 @@ const initializeDatabase = async () => {
 
   try {
     await client.connect();
-    console.log(
-      `Connected to PostgreSQL database:
-      User: ${client.user}
-      Host: ${client.host}
-      Database: ${client.database}
-      Port: ${client.port}`
-    );
+    console.log(`Connected to PostgreSQL database`);
 
     await createTableIfNotExists();
     console.log("Database setup complete");
@@ -40,11 +34,11 @@ const initializeDatabase = async () => {
 
 const createTableIfNotExists = async () => {
   const columnsDefinition = dbConfig.columns
-    .map((column) => `${column.name} ${column.type}`)
+    .map((column) => `"${column.name}" ${column.type}`)
     .join(", ");
 
   const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS ${dbConfig.tableName} (
+    CREATE TABLE IF NOT EXISTS "${dbConfig.tableName}" (
       ${columnsDefinition}
     )
   `;
@@ -78,7 +72,7 @@ const uploadCSV = async (req, res) => {
     const results = [];
     await new Promise((resolve, reject) => {
       fs.createReadStream(filePath)
-        .pipe(csvParser())
+        .pipe(csvParser({ headers: dbConfig.columns.map((col) => col.name) }))
         .on("data", (data) => results.push(data))
         .on("end", resolve)
         .on("error", reject);
@@ -89,7 +83,7 @@ const uploadCSV = async (req, res) => {
       .map((_, index) => `$${index + 1}`)
       .join(", ");
     const updateSet = columnNames
-      .map((col, index) => `${col} = EXCLUDED.${col}`)
+      .map((col, index) => `"${col}" = EXCLUDED."${col}"`)
       .join(", ");
 
     let inserted = 0;
@@ -97,15 +91,23 @@ const uploadCSV = async (req, res) => {
 
     for (const row of results) {
       const query = `
-        INSERT INTO ${dbConfig.tableName} (${columnNames.join(", ")})
+        INSERT INTO "${dbConfig.tableName}" ("${columnNames.join('", "')}")
         VALUES (${placeholders})
         ON CONFLICT (id) DO UPDATE SET
           ${updateSet}
       `;
       const values = columnNames.map((col) => {
         if (col === "id") {
-          const id = parseInt(row[col], 10);
-          return isNaN(id) ? null : id;
+          return parseInt(row[col], 10) || null;
+        }
+        if (col === "תאריך") {
+          return row[col] ? new Date(row[col]) : null;
+        }
+        if (col === "טלפון") {
+          return row[col] ? BigInt(row[col].replace(/\D/g, "")) : null;
+        }
+        if (col === "לוקח תרופות" || col === "סובל מכאבים") {
+          return row[col] === "כן" || row[col] === "true" || row[col] === "1";
         }
         return row[col] || null;
       });
@@ -137,7 +139,17 @@ const uploadCSV = async (req, res) => {
 const fetchData = async (req, res) => {
   try {
     const result = await client.query(
-      `SELECT * FROM ${dbConfig.tableName} ORDER BY id`
+      `SELECT 
+        id, 
+        "תאריך", 
+        "שם מלא", 
+        "טלפון"::TEXT as "טלפון", 
+        "אימייל", 
+        "לוקח תרופות", 
+        "סובל מכאבים", 
+        "קופת חולים"
+      FROM "${dbConfig.tableName}" 
+      ORDER BY id`
     );
     res.json(result.rows);
   } catch (err) {
@@ -146,17 +158,4 @@ const fetchData = async (req, res) => {
   }
 };
 
-const updateData = async (req, res) => {
-  const { id, first_name } = req.body;
-  try {
-    const query = "UPDATE mock_data SET first_name = $1 WHERE id = $2";
-    const values = [first_name, id];
-    await client.query(query, values);
-    res.send("Data updated");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error updating data");
-  }
-};
-
-module.exports = { initializeDatabase, uploadCSV, fetchData, updateData };
+module.exports = { initializeDatabase, uploadCSV, fetchData };
