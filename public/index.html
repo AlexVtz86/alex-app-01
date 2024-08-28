@@ -43,9 +43,11 @@
         <th>שם מלא</th>
         <th>טלפון</th>
         <th>אימייל</th>
-        <th>לוקח תרופות</th>
-        <th>סובל מכאבים</th>
+        <th>האם אתה נוטל תרופות קבועות באופן קבוע</th>
+        <th>האם אתה סובל מכאבים בריכיים מתמשכים</th>
         <th>קופת חולים</th>
+        <th>מקור הליד</th>
+        <th>רישיון עסק / חידוש</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -79,13 +81,15 @@
           const tr = document.createElement('tr');
           tr.innerHTML = `
                         <td>${row.id}</td>
-                        <td>${new Date(row.תאריך).toLocaleDateString('he-IL')}</td>
+                        <td>${new Date(row.תאריך).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}</td>
                         <td>${row['שם מלא']}</td>
                         <td>${row.טלפון}</td>
                         <td>${row.אימייל}</td>
-                        <td>${row['לוקח תרופות'] ? 'כן' : 'לא'}</td>
-                        <td>${row['סובל מכאבים'] ? 'כן' : 'לא'}</td>
+                        <td>${row['האם אתה נוטל תרופות קבועות באופן קבוע']}</td>
+                        <td>${row['האם אתה סובל מכאבים בריכיים מתמשכים']}</td>
                         <td>${row['קופת חולים']}</td>
+                        <td>${row['מקור הליד']}</td>
+                        <td>${row['רישיון עסק / חידוש']}</td>
                     `;
           tbody.appendChild(tr);
         });

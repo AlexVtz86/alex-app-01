@@ -1,13 +1,14 @@
 {
   "tableName": "Yarokale",
   "columns": [
-    { "name": "id", "type": "SERIAL PRIMARY KEY" },
-    { "name": "תאריך", "type": "DATE" },
+    { "name": "תאריך", "type": "TIMESTAMP" },
     { "name": "שם מלא", "type": "VARCHAR(255)" },
-    { "name": "טלפון", "type": "BIGINT" },
+    { "name": "טלפון", "type": "VARCHAR(20)" },
     { "name": "אימייל", "type": "VARCHAR(255)" },
-    { "name": "לוקח תרופות", "type": "BOOLEAN" },
-    { "name": "סובל מכאבים", "type": "BOOLEAN" },
-    { "name": "קופת חולים", "type": "VARCHAR(255)" }
+    { "name": "האם אתה נוטל תרופות קבועות באופן קבוע", "type": "VARCHAR(5)" },
+    { "name": "האם אתה סובל מכאבים בריכיים מתמשכים", "type": "VARCHAR(5)" },
+    { "name": "קופת חולים", "type": "VARCHAR(255)" },
+    { "name": "מקור הליד", "type": "VARCHAR(255)" },
+    { "name": "רישיון עסק / חידוש", "type": "VARCHAR(255)" }
   ]
 }
