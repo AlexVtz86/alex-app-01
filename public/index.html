@@ -1,10 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
+<<<<<<< Updated upstream
   <title>Dashboard</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+=======
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>העלאת והצגת CSV</title>
+  <!-- <script src="/queries.js"></script> -->
+  <style>
+    * {
+      font-size: small;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: right;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+    
+  </style>
+>>>>>>> Stashed changes
 </head>
 <body>
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   <div class="container">
     <h1>Dashboard</h1>
     <form id="uploadForm" enctype="multipart/form-data">
@@ -27,6 +57,58 @@
       const result = await response.text();
       alert(result);
       fetchData();
+=======
+=======
+>>>>>>> Stashed changes
+  
+  <h1>העלאת והצגת CSV</h1>
+
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".csv" required>
+    <button type="submit">העלאת CSV</button>
+  </form>
+  <!-- <form id="organize">
+    <button type="submit">organize</button>
+  </form> -->
+
+  <div id="message"></div>
+
+  <h2>טבלת נתונים</h2>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>מזהה</th>
+        <th>תאריך</th>
+        <th>שם מלא</th>
+        <th>טלפון</th>
+        <th>אימייל</th>
+        <th>האם אתה נוטל תרופות קבועות באופן קבוע</th>
+        <th>האם אתה סובל מכאבים כרוניים מתמשכים</th>
+        <th>קופת חולים</th>
+        <th>מקור הליד</th>
+        <th>רישיון עסק / חידוש</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      try {
+        const response = await fetch('/api/upload', { 
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.text();  
+        document.getElementById('message').textContent = result;
+        fetchData();
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('message').textContent = 'אירעה שגיאה במהלך ההעלאה.';
+      }
+>>>>>>> Stashed changes
     });
 
     async function fetchData() { // a function to 
@@ -39,8 +121,9 @@
       tableHTML += '</tbody></table>';
       document.getElementById('dataTable').innerHTML = tableHTML;
     }
-
-    fetchData();
+   fetchData();
   </script>
+  
+</html>
 </body>
 </html>
