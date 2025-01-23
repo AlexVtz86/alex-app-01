@@ -12,10 +12,10 @@ let client = null;
 
 const initializeDatabase = async () => {
   client = new Client({
-    user: "myapp",
+    user: "alex",
     host: "localhost",
-    database: "mydatabase",
-    password: "123456",
+    database: "postgres",
+    password: "alexadmin",
     port: 5432,
   });
 
@@ -233,20 +233,19 @@ const organizeData = async (req, res) => {
   }
 }; 
 
-const updateData = async (req, res) => {
-  const { id, first_name } = req.body;
-  try {
-    const query = "UPDATE mock_data_root SET first_name = $1 WHERE id = $2";
-    const values = [first_name, id];
-    await client.query(query, values);
-    res.send("Data updated");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error updating data");
-  }
-};
+// const updateData = async (req, res) => {
+//   const { id, first_name } = req.body;
+//   try {
+//     const query = "UPDATE mock_data_root SET first_name = $1 WHERE id = $2";
+//     const values = [first_name, id];
+//     await client.query(query, values);
+//     res.send("Data updated");
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send("Error updating data");
+//   }
+// };
 
-module.exports = { uploadCSV, fetchData, updateData };
 
 // we can see that almost all the data transitions and manipulations in the code are happening through the JSON object file //
   

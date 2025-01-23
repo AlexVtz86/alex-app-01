@@ -8,6 +8,6 @@ const {
 
 router.post("/upload", uploadCSV);
 router.get("/data", fetchData);
-router.put("/data", updateData);
+// router.put("/data", updateData);
 
 module.exports = router;
