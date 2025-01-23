@@ -8,34 +8,28 @@ const { query } = require("express");
 const Query = require("mysql/lib/protocol/sequences/Query");
 
 
-// Database connection configuration
-const client = new Client({
-  user: "alex",
-  host: "localhost",
-  database: "postgres",
-  password: "alexadmin",
-  port: 5432,
-});
+let client = null;
 
-client
-  .connect()
-  .then(() => console.log("Connected to PostgreSQL database"))
-  .catch((err) => console.error("Connection error", err.stack));
+const initializeDatabase = async () => {
+  client = new Client({
+    user: "myapp",
+    host: "localhost",
+    database: "mydatabase",
+    password: "123456",
+    port: 5432,
+  });
 
-
-
-const initializeDatabase = async () => { // function for connection with database 
-      client = new Client({
-        user: "alex",
-        host: "localhost",
-        database: "postgres",
-        password: "alexadmin",
-        port: 5432,
-      });
+  try {
+    await client.connect();
+    console.log("Connected to the database");
+    await createTableIfNotExists();
+  } catch (err) {
+    console.error("Failed to connect to the database:", err);
+    throw err;
   }
+};
 
-
-const createTableIfNotExists = async () => { // function for creating DB table if not exists
+const createTableIfNotExists = async () => {
   const dropTableQuery = `DROP TABLE IF EXISTS "${dbConfig.tableName}"`;
   const columnsDefinition = dbConfig.columns
     .map((column) => `"${column.name}" ${column.type}`)
@@ -47,16 +41,18 @@ const createTableIfNotExists = async () => { // function for creating DB table i
       ${columnsDefinition}
     )
   `;
-}
+
   try {
-    await client.query(dropTableQuery); //  AWAITING 
+    await client.query(dropTableQuery);
     console.log(`Table ${dbConfig.tableName} dropped if it existed`);
-    await client.query(createTableQuery); //  AWAITING
+    await client.query(createTableQuery);
     console.log(`Table ${dbConfig.tableName} created`);
   } catch (err) {
     console.error("Error creating table:", err);
     throw err;
   }
+};
+
 
 const uploadCSV = async (req, res) => { //function for handling csv file upload
   if (!req.files || !req.files.file) {
