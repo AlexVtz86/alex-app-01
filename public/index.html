@@ -1,46 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="he" dir="rtl">
+
 <head>
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>העלאת והצגת CSV</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: right;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>Dashboard</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
-      <input type="file" name="csv" />
-      <button type="submit">Upload</button>
-    </form>
-    <div id="dataTable"></div>
-  </div>
-  
+  <h1>העלאת והצגת CSV</h1>
+
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".csv" required>
+    <button type="submit">העלאת CSV</button>
+  </form>
+
+  <div id="message"></div>
+
+  <h2>טבלת נתונים</h2>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>מזהה</th>
+        <th>תאריך</th>
+        <th>שם מלא</th>
+        <th>טלפון</th>
+        <th>אימייל</th>
+        <th>האם אתה נוטל תרופות קבועות באופן קבוע</th>
+        <th>האם אתה סובל מכאבים כרוניים מתמשכים</th>
+        <th>קופת חולים</th>
+        <th>מקור הליד</th>
+        <th>רישיון עסק / חידוש</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
   <script>
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => { //a function to 
-      // hadle form submission, a file in this case
-      e.preventDefault(); // preventing form submission 
-      const formData = new FormData(e.target); //
-      const response = await fetch('/upload', { // a nested fetch function to "post" the data into a 
-      // directrory- meaning 
-        method: 'POST',
-        body: formData
-      });
-      const result = await response.text();
-      alert(result);
-      fetchData();
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.text();
+        document.getElementById('message').textContent = result;
+        fetchData();
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('message').textContent = 'אירעה שגיאה במהלך ההעלאה.';
+      }
     });
 
-    async function fetchData() { // a function to 
-      const response = await fetch('./data');
-      const data = await response.json();
-      let tableHTML = '<table class="table"><thead><tr><th>Field1</th><th>Field2</th></tr></thead><tbody>';
-      data.forEach(row => {
-        tableHTML += `<tr><td>${row.field1}</td><td>${row.field2}</td></tr>`;
-      });
-      tableHTML += '</tbody></table>';
-      document.getElementById('dataTable').innerHTML = tableHTML;
+    async function fetchData() {
+      try {
+        const response = await fetch('/api/data');
+        const data = await response.json();
+        const tbody = document.querySelector('#dataTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+                        <td>${row.id || ''}</td>
+                        <td>${row['תאריך'] ? new Date(row['תאריך']).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) : ''}</td>
+                        <td>${row['שם מלא'] || ''}</td>
+                        <td>${row['טלפון'] || ''}</td>
+                        <td>${row['אימייל'] || ''}</td>
+                        <td>${row['האם אתה נוטל תרופות קבועות באופן קבוע'] || ''}</td>
+                        <td>${row['האם אתה סובל מכאבים כרוניים מתמשכים?'] || ''}</td>
+                        <td>${row['קופת חולים'] || ''}</td>
+                        <td>${row['מקור הליד'] || ''}</td>
+                        <td>${row['רישיון עסק / חידוש'] || ''}</td>
+                    `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('message').textContent = 'אירעה שגיאה בעת אחזור הנתונים.';
+      }
     }
 
     fetchData();
   </script>
 </body>
+
 </html>
