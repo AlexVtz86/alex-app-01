@@ -5,6 +5,7 @@ const {
   initializeDatabase,
   uploadCSV,
   fetchData,
+  // organizeData,
 } = require("./controllers/dataController");
 
 const app = express();
@@ -29,7 +30,10 @@ initializeDatabase()
       res.sendFile(path.join(__dirname, "public/index.html"));
     });
 
-    const PORT = process.env.PORT || 3000;
+     // Endpoint to handle the query from React
+    // app.post("/", organizeData);
+
+    const PORT = process.env.PORT || 3333;
     app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
   })
   .catch((err) => {

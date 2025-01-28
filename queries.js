@@ -1,8 +1,8 @@
-const dbConfig = require("../db_config.json");
-const { Client } = require("pg");
-const { initializeDatabase } = require("./controllers/dataController");
+// const dbConfig = require("../db_config.json");
+// const { Client } = require("pg");
+// const { initializeDatabase } = require("./controllers/dataController");
 
-const db = initializeDatabase(dbConfig);
+// const db = initializeDatabase(dbConfig);
 
 // steps to organize the data from the database 
 // implement logic to order by ascending or descending order based on a particular parameter
@@ -95,20 +95,20 @@ const db = initializeDatabase(dbConfig);
  // const sortedData = data.sort((a, b) => a.date.localeCompare(b.date));
 // console.log(sortedData);
 
-const orderQuery = (`SELECT * FROM ${dbConfig.tableName} LIMIT 20`);
+// const orderQuery = (`SELECT * FROM ${dbConfig.tableName} LIMIT 20`);
 
-document.getElementById("organize").addEventListener("submit", async() => {
-        try {
-            // const data = await fetchData(); // Fetch the data from the database
-            // data.sort(orderQuery); // Sort
-            orderQuery;
-            console.log("Data organized - first 20 entries.");
-        }
-        catch (err) {
-            console.error("Error organizing data:", err);
-        }
-}
-)
+// document.getElementById("organize").addEventListener("submit", async() => {
+//         try {
+//             // const data = await fetchData(); // Fetch the data from the database
+//             // data.sort(orderQuery); // Sort
+//             orderQuery;
+//             console.log("Data organized - first 20 entries.");
+//         }
+//         catch (err) {
+//             console.error("Error organizing data:", err);
+//         }
+// }
+// )
 
 
   
